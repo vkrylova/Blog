@@ -1,8 +1,9 @@
 from flask import jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from werkzeug.exceptions import BadRequest
 
 from app import app, db
-from models import User
+from models import User, Post
 
 
 @app.route('/', methods=['GET'])
@@ -38,3 +39,18 @@ def login():
     if not token:
         raise BadRequest('Invalid credentials')
     return jsonify({'access_token': token}), 200
+
+
+@app.route('/v1/posts', methods=['POST'])
+@jwt_required()
+def add_posts():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    title = data.get('title')
+    body = data.get('body')
+    if not title or not body:
+        raise BadRequest('Missing fields')
+    post = Post(title=title, body=body, author_id=user_id)
+    db.session.add(post)
+    db.session.commit()
+    return jsonify(message='Post added successfully')
