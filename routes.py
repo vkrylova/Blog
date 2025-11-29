@@ -3,7 +3,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from werkzeug.exceptions import BadRequest, NotFound
 
 from app import app, db
-from models import User, Post
+from models import User, Post, Comment
 
 
 @app.route('/', methods=['GET'])
@@ -98,3 +98,20 @@ def delete_post(post_id):
     db.session.delete(post)
     db.session.commit()
     return jsonify(message='Post deleted successfully'), 200
+
+
+@app.route('/v1/posts/<int:post_id>/comments', methods=['POST'])
+@jwt_required()
+def add_comment(post_id):
+    user_id = int(get_jwt_identity())
+    post = Post.query.get(post_id)
+    if not post:
+        raise NotFound('Post not found')
+    data = request.get_json()
+    body = data.get('body')
+    if not body:
+        raise BadRequest('Missing field')
+    comment = Comment(body=body, author_id=user_id, post_id=post_id)
+    db.session.add(comment)
+    db.session.commit()
+    return jsonify(message='Comment added successfully'), 200
