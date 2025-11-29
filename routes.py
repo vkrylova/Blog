@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
 
 from app import app, db
 from models import User, Post
@@ -54,3 +54,17 @@ def add_posts():
     db.session.add(post)
     db.session.commit()
     return jsonify(message='Post added successfully')
+
+
+@app.route('/v1/posts', methods=['GET'])
+def get_posts():
+    posts = Post.query.all()
+    return jsonify(posts=[post.to_dict() for post in posts]), 200
+
+
+@app.route('/v1/posts/<int:post_id>', methods=['GET'])
+def get_post(post_id):
+    if post := Post.query.get(post_id):
+        return jsonify(posts=post.to_dict()), 200
+    else:
+        raise NotFound('Post not found')

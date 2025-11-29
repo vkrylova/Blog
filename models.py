@@ -23,7 +23,7 @@ class User(db.Model):
     def authenticate(cls, email, password):
         user = cls.query.filter_by(email=email).first()
         if user and user.check_password(password):
-            access_token = create_access_token(identity=user.id)
+            access_token = create_access_token(identity=str(user.id))
             return access_token, user
 
 
@@ -33,3 +33,14 @@ class Post(db.Model):
     body = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.now())
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'body': self.body,
+            'timestamp': self.timestamp.strftime('%d-%m-%Y %H:%M:%S'),
+            'author': {
+                'id': self.author_id,
+            }
+        }
