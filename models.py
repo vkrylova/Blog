@@ -34,6 +34,7 @@ class Post(db.Model):
     body = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.now())
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    comments = db.relationship('Comment', lazy='dynamic')
 
     def to_dict(self):
         return {
@@ -53,3 +54,13 @@ class Comment(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.now())
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'body': self.body,
+            'timestamp': self.timestamp.strftime('%d-%m-%Y %H:%M:%S'),
+            'author': {
+                'id': self.author_id,
+            }
+        }
