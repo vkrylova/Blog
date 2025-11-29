@@ -44,7 +44,7 @@ def login():
 @app.route('/v1/posts', methods=['POST'])
 @jwt_required()
 def add_posts():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json()
     title = data.get('title')
     body = data.get('body')
@@ -68,3 +68,19 @@ def get_post(post_id):
         return jsonify(posts=post.to_dict()), 200
     else:
         raise NotFound('Post not found')
+
+
+@app.route('/v1/posts/<int:post_id>', methods=['PATCH'])
+@jwt_required()
+def update_post(post_id):
+    user_id = int(get_jwt_identity())
+    post = Post.query.get(post_id)
+    if not post:
+        raise NotFound('Post not found')
+    if post.author_id != user_id:
+        raise BadRequest('You are not authorized to update this post')
+    data = request.get_json()
+    post.title = data.get('title', post.title)
+    post.body = data.get('body', post.body)
+    db.session.commit()
+    return jsonify(message='Post updated successfully'), 200
